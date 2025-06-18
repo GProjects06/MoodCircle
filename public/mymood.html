@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang=en>
+<head>
+<meta charset=UTF-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>MMC - My Mood</title>
+<link rel=stylesheet href=styles.css>
+</head>
+<body>
+<header class=navbar>
+<div class=nav-left>MMC</div>
+<div class=nav-right>
+<a href=/global class=circle-btn>Global Feed</a>
+<a href=/circle class=circle-btn>My Circle</a>
+<button id=logoutBtn>Logout</button>
+</div>
+</header>
+<div class=wrapper>
+<div class=left-col>
+<h1>MMC</h1>
+<div class=header-row>
+<div id=welcome></div>
+</div>
+<form id=moodForm>
+<label for=mood>Select Mood:</label>
+<select id=mood name=mood required>
+<option value="">--Choose--</option>
+<option value=happy>Happy</option>
+<option value=sad>Sad</option>
+<option value=angry>Angry</option>
+<option value=neutral>Neutral</option>
+<option value=crying>Crying</option>
+<option value=regret>Regret</option>
+<option value=anxious>Anxious</option>
+<option value=excited>Excited</option>
+<option value=calm>Calm</option>
+<option value=stressed>Stressed</option>
+<option value=hopeful>Hopeful</option>
+<option value=lonely>Lonely</option>
+<option value=frustrated>Frustrated</option>
+<option value=grateful>Grateful</option>
+<option value=confused>Confused</option>
+</select>
+<label for=note>Optional Note:</label>
+<textarea id=note name=note maxlength=300 placeholder="Express your thoughts (max 300 chars)"></textarea>
+<label for=intensity>Mood Intensity (1-5):</label>
+<select id=intensity name=intensity required>
+<option value="">--Choose--</option>
+<option value=1>1 - Very Low</option>
+<option value=2>2 - Low</option>
+<option value=3>3 - Medium</option>
+<option value=4>4 - High</option>
+<option value=5>5 - Very High</option>
+</select>
+<label>
+<input type=checkbox id=shared name=shared>
+Share anonymously on the global feed
+</label>
+<button type=submit>Submit Mood</button>
+</form>
+<div id=error class="message error"></div>
+<div id=success class="message success"></div>
+</div>
+<div class=right-col>
+<h2>My Mood History</h2>
+<ul id=moodList></ul>
+<p id=overallMood></p>
+<div id=moodCounts></div>
+</div>
+</div>
+<script>const moodColors={happy:"#FFF9C4",sad:"#E3F2FD",angry:"#FFCDD2",neutral:"#F5F5F5",crying:"#ECEFF1",regret:"#D7CCC8",anxious:"#FFE0B2",excited:"#FFE082",calm:"#E0F2F1",stressed:"#FFEBEE",hopeful:"#E1F5FE",lonely:"#F3E5F5",frustrated:"#FFF3E0",grateful:"#F0F4C3",confused:"#EDE7F6"},uid=localStorage.getItem("uid"),wrapper=document.querySelector(".wrapper");wrapper.className="wrapper";const welcomeDiv=document.getElementById("welcome"),errorDiv=document.getElementById("error"),successDiv=document.getElementById("success"),moodList=document.getElementById("moodList"),form=document.getElementById("moodForm"),logoutBtn=document.getElementById("logoutBtn");async function loadMoods(){errorDiv.textContent="",successDiv.textContent="",moodList.innerHTML="<li>Loading...</li>";try{const o=await fetch(`/api/moods?uid=${uid}`),e=await o.json();if(!o.ok)throw new Error(e.error||"Failed to load moods");if(moodList.innerHTML="",0===e.moods.length)return void(moodList.innerHTML="<li>No moods recorded yet</li>");for(const o of e.moods){const e=document.createElement("li"),t=new Date(o.createdAt);e.textContent=`${o.mood.charAt(0).toUpperCase()+o.mood.slice(1)} - ${t.toLocaleString()}${o.note?" - Note: "+o.note:""}${o.shared?" (Shared)":""}`,moodList.appendChild(e)}}catch(o){moodList.innerHTML="",errorDiv.textContent=o.message}}function capitalize(o){return o?o.charAt(0).toUpperCase()+o.slice(1):""}async function loadMoodSummary(){const o=document.getElementById("moodCounts"),e=document.getElementById("overallMood");o.innerHTML="Loading...",e.textContent="";try{const t=await fetch(`/api/mood-summary?uid=${uid}`);if(!t.ok)throw new Error("Failed to load mood summary");const n=await t.json();e.textContent=`Overall Mood: ${capitalize(n.overallMood||"neutral")}`;const r=moodColors[n.overallMood]||"#f5f5f5";wrapper.style.backgroundColor=r,document.body.className=n.overallMood||"neutral";n.totalMoods||Object.values(n.moodCounts||{}).reduce(((o,e)=>o+e),0);if(o.innerHTML="",n.moodCounts&&0!==Object.keys(n.moodCounts).length){const e=document.createElement("ul");for(const[o,t]of Object.entries(n.moodCounts))if(t>0){const n=document.createElement("li");n.textContent=`${capitalize(o)}: ${t}`,e.appendChild(n)}o.appendChild(e)}else o.textContent="No mood data yet."}catch(e){o.textContent="Error loading mood summary.",console.error(e)}}function showError(o){errorDiv.textContent=o,errorDiv.style.display=o?"block":"none"}function showSuccess(o){successDiv.textContent=o,successDiv.style.display=o?"block":"none"}uid?(welcomeDiv.textContent=`UID: ${uid}`,loadMoods()):window.location.href="/login",logoutBtn.addEventListener("click",(()=>{localStorage.removeItem("uid"),window.location.href="/login"})),form.addEventListener("submit",(async o=>{o.preventDefault(),errorDiv.textContent="",successDiv.textContent="";const e=form.mood.value,t=form.intensity.value,n=form.note.value.trim(),r=form.shared.checked;if(e)try{const o=await fetch("/api/mood",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({uid:uid,mood:e,note:n,moodIntensity:t,shared:r})}),s=await o.json();o.ok?(successDiv.textContent="Mood submitted successfully!",form.reset(),loadMoods(),loadMoodSummary()):errorDiv.textContent=s.error||"Failed to submit mood"}catch{errorDiv.textContent="Network error"}else errorDiv.textContent="Please select a mood."})),uid&&loadMoodSummary(),errorDiv.textContent="Please select a mood",showError("Please select a mood."),successDiv.textContent="Mood submitted successfully!",showSuccess("Mood submitted successfully!"),showError(""),showSuccess("")</script>
+</body>
+</html>

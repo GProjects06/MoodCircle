@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang=en>
+<head>
+<meta charset=UTF-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>MMC - Sign Up</title>
+<link rel=stylesheet href=styles.css>
+</head>
+<body>
+<div class=auth-wrapper>
+<h1>Sign Up</h1>
+<div id=error class="message error"></div>
+<form id=signupForm>
+<label for=uid>Your UID (auto-generated):</label>
+<input id=uid name=uid class=readonly-uid readonly>
+<label for=password>Choose a password (min 6 chars):</label>
+<input type=password id=password name=password required minlength=6 maxlength=15>
+<button type=submit>Create Account</button>
+</form>
+<p>Already have an account? <a href=/login>Log In</a></p>
+</div>
+<div id=uidPrompt class="uid-prompt hidden">
+<div class=uid-box>
+<h2>Account Created!</h2>
+<p>Your UID is:</p>
+<code id=generatedUid></code>
+<button id=copyUidBtn>Copy UID</button>
+<button id=closePromptBtn>Close</button>
+</div>
+</div>
+<script>document.addEventListener("DOMContentLoaded",(async()=>{try{const e=await fetch("/api/uid"),t=await e.json();if(e.ok&&t.uid){document.getElementById("uid").value=t.uid}else alert("Failed to generate UID. Please reload the page")}catch{alert("Network error while generating UID")}})),document.getElementById("signupForm").addEventListener("submit",(async function(e){e.preventDefault();const t=document.getElementById("password").value,n=document.getElementById("uid").value,d=document.getElementById("error");d.textContent="";try{const e=await fetch("/api/signup",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:t,uid:n})}),o=await e.json();if(e.ok)d.textContent="",document.getElementById("generatedUid").textContent=o.uid,document.getElementById("uidPrompt").classList.remove("hidden");else if(d.textContent=o.error||"Signup failed.",o.error&&o.error.includes("UID already taken")){const e=await fetch("/api/uid"),t=await e.json();e.ok&&t.uid&&(document.getElementById("uid").value=t.uid)}}catch{d.textContent="Network error"}})),document.getElementById("closePromptBtn").addEventListener("click",(()=>{document.getElementById("uidPrompt").classList.add("hidden")})),document.getElementById("copyUidBtn").addEventListener("click",(()=>{const e=document.getElementById("generatedUid").textContent;navigator.clipboard.writeText(e).then((()=>{alert("UID copied to clipboard!")}))}))</script>
+</body>
+</html>

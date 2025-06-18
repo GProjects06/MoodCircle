@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang=en>
+<head>
+<meta charset=UTF-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>MMC - Global Mood Feed</title>
+<link rel=stylesheet href=styles.css>
+</head>
+<body>
+<header class=navbar>
+<div class=nav-left>MMC</div>
+<div class=nav-right>
+<a href=/ class=circle-btn>My Mood</a>
+<a href=/circle class=circle-btn>My Circle</a>
+<button id=logoutBtn>Logout</button>
+</div>
+</header>
+<h1 class=page-title>Global Mood Feed</h1>
+<div id=feed>Loading feed...</div>
+<script>function capitalize(e){return e.charAt(0).toUpperCase()+e.slice(1)}function formatDate(e){return new Date(e).toLocaleString()}async function loadFeed(){const e=document.getElementById("feed");e.textContent="Loading feed...",e.className="loading";try{const t=await fetch("/api/feed");if(!t.ok)throw new Error("Failed to load feed");const n=await t.json();if(!n.feed||0===n.feed.length)return e.textContent="No posts yet.",void(e.className="empty");e.className="",e.innerHTML="",n.feed.forEach((t=>{const n=document.createElement("div");n.className="post",n.innerHTML=`\n        <div class="uid">User ID: ${t.uid}</div>\n        <div class="mood">${capitalize(t.mood)}</div>\n        <div class="note">${t.note||"<i>No note</i>"}</div>\n        <div class="intensity">Intensity: ${t.moodIntensity||3}/5</div>\n        <div class="timestamp">${formatDate(t.createdAt)}</div>\n      `,e.appendChild(n)}))}catch(t){console.error(t),e.textContent="Failed to load feed.",e.className="empty"}}logoutBtn.addEventListener("click",(()=>{localStorage.removeItem("uid"),window.location.href="/login"})),loadFeed()</script>
+</body>
+</html>

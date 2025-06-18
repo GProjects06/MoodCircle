@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang=en>
+<head>
+<meta charset=UTF-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>MMC - Log In</title>
+<link rel=stylesheet href=styles.css>
+</head>
+<body>
+<div class=auth-wrapper>
+<h1>Log In</h1>
+<div id=error class="message error"></div>
+<form id=loginForm>
+<label for=uid>UID (6 characters):</label>
+<input id=uid name=uid class=editable-uid required minlength=6 maxlength=6 pattern=[A-Z0-9]{6}>
+<label for=password>Password:</label>
+<input type=password id=password name=password required minlength=6 maxlength=15>
+<button type=submit>Log In</button>
+</form>
+<p>Don't have an account? <a href=/signup>Sign Up</a></p>
+</div>
+<script>const form=document.getElementById("loginForm"),errorDiv=document.getElementById("error");form.addEventListener("submit",(async t=>{t.preventDefault(),errorDiv.textContent="";const e=form.uid.value.trim().toUpperCase(),o=form.password.value.trim();try{const t=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({uid:e,password:o})}),r=await t.json();t.ok?(localStorage.setItem("uid",e),window.location.href="/"):errorDiv.textContent=r.error||"Login failed"}catch{errorDiv.textContent="Network error"}}))</script>
+</body>
+</html>

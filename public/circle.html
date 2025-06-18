@@ -1,1 +1,39 @@
 
+<!doctype html>
+<html lang=en>
+<head>
+<meta charset=UTF-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>MMC - My Circle</title>
+<link rel=stylesheet href=styles.css>
+</head>
+<body>
+<header class=navbar>
+<div class=nav-left>MMC</div>
+<div class=nav-right>
+<a href=/global class=circle-btn>Global Feed</a>
+<a href=/ class=circle-btn>My Mood</a>
+<button id=logoutBtn class=circle-btn>Logout</button>
+</div>
+</header>
+<div id=feed>
+<h1 class=page-title-2>Circle Mood Feed</h1>
+<section id=circleActions style=display:none class="section circle-form">
+<h2 class=h2-new>Create Circle</h2>
+<input type="text" id="circleName" placeholder="Enter Circle Name">
+<button class=circle-btn-primary onclick=createCircle()>Create Circle</button>
+<h2 class=h2-new>Join Circle</h2>
+<input type="text" id="joinCode" placeholder="Enter Circle Code">
+<button class=circle-btn-primary onclick=joinCircle()>Join Circle</button>
+</section>
+<section id=circleFeed style=display:none class=section>
+<div id=circleHeader class=circle-header>
+<span id=circleStatus><strong>Loading...</strong></span>
+<button id=leaveCircleBtn onclick=leaveCircle()>Leave Circle</button>
+</div>
+<div id=circlePosts>Loading feed...</div>
+</section>
+</div>
+<script>const uid=localStorage.getItem("uid");function capitalize(e){return e.charAt(0).toUpperCase()+e.slice(1)}function formatDate(e){return new Date(e).toLocaleString()}async function loadCircleStatus(){try{const e=await fetch(`/api/user?uid=${uid}`),t=await e.json();t.circleCode?(document.getElementById("circleStatus").innerHTML=`<strong>Circle Code:</strong> ${t.circleCode}`,document.getElementById("circleFeed").style.display="block",loadCircleFeed()):(document.getElementById("circleStatus").textContent="You're not in a circle yet",document.getElementById("circleActions").style.display="block")}catch(e){document.getElementById("circleStatus").textContent="Error loading circle status",console.error(e)}}async function createCircle(){const e=document.getElementById("circleName").value.trim();if(!e)return alert("Enter a circle name.");try{const t=await fetch("/api/create-circle",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({uid:uid,name:e})}),o=await t.json();alert(o.message||"Circle created"),location.reload()}catch(e){alert("Failed to create circle."),console.error(e)}}async function joinCircle(){const e=document.getElementById("joinCode").value.trim();if(!e)return alert("Enter a circle code.");try{const t=await fetch("/api/join-circle",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({uid:uid,code:e})}),o=await t.json();if(!t.ok)return void alert(o.message||"Circle does not exist");alert(o.message||"Joined circle"),location.reload()}catch(e){alert("Failed to join circle."),console.error(e)}}async function leaveCircle(){if(confirm("Are you sure you want to leave the circle?"))try{const e=await fetch("/api/circle-leave",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({uid:uid})}),t=await e.json();alert(t.message||"Left circle"),location.reload()}catch(e){alert("Failed to leave circle"),console.error(e)}}async function loadCircleFeed(){try{const e=await fetch(`/api/circle-feed?uid=${uid}`),t=await e.json(),o=document.getElementById("circlePosts");if(o.className="",o.innerHTML="",!t.feed||0===t.feed.length)return void(o.textContent="No posts in your circle yet");for(const e of t.feed){const t=document.createElement("div");t.className="post",t.innerHTML=`\n    <div class="uid">User ID: ${e.uid}</div>\n    <div class="mood">${capitalize(e.mood)}</div>\n    <div class="note">${e.note||"<i>No note</i>"}</div>\n    <div class="intensity">Intensity: ${e.moodIntensity||3}/5</div>\n    <div class="timestamp">${formatDate(e.createdAt)}</div>\n  `,o.appendChild(t)}}catch(e){document.getElementById("circlePosts").textContent="Error loading feed.",console.error(e)}}uid||(window.location.href="/login"),logoutBtn.addEventListener("click",(()=>{localStorage.removeItem("uid"),window.location.href="/login"})),loadCircleStatus()</script>
+</body>
+</html>
